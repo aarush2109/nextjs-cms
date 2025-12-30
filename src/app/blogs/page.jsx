@@ -16,7 +16,7 @@ const blogConfig = [
     },
     {
         "title": "Become a backend dev in no time",
-        "excerpt": "how to becmoe a backend developer in 2025...",
+        "excerpt": "how to become a backend developer in 2025...",
         "image": "/thumbnails/become-backend-dev.png"    ,
         "url": '/demo-slug'
     },
