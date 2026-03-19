@@ -10,10 +10,13 @@ export async function GET(req: Request) {
         
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get("page") || "1");
+        const statusParam = searchParams.get("status");
         const limit = 10;
         const skip = (page - 1) * limit;
 
-        const posts = await Post.find({ status: "published" })
+        const query = statusParam === "all" ? {} : { status: "published" };
+
+        const posts = await Post.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
