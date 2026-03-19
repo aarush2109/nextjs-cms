@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import Post from "@/models/Post";
 import User from "@/models/User";
@@ -57,16 +59,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "A post with a similar title already exists." }, { status: 400 });
         }
 
-        // Determine Author: if not provided, fetch the first user as a fallback
-        let authorId = author;
-        if (!authorId) {
-             const defaultUser = await User.findOne();
-             if (defaultUser) {
-                 authorId = defaultUser._id;
-             } else {
-                 return NextResponse.json({ success: false, error: "No user found in the database. Please create a user first." }, { status: 400 });
-             }
+        const session = await getServerSession(authOptions);
+        
+        if (!session || !session.user) {
+            return NextResponse.json({ success: false, error: "Unauthorized. Please log in to create a post." }, { status: 401 });
         }
+
+        const authorId = (session.user as any).id;
 
         // Create the post
         const newPost = await Post.create({
