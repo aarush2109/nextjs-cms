@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { Loader2, Plus, Edit2, Trash2, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Post } from "@/components/PostCard";
 
 export default function DashboardPage() {
+    const { data: session } = useSession();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -17,8 +19,8 @@ export default function DashboardPage() {
 
     const fetchPosts = async () => {
         try {
-            // Fetch ALL posts including drafts by passing status=all
-            const res = await fetch("/api/posts?status=all");
+            // Fetch personal posts
+            const res = await fetch("/api/posts/my");
             if (!res.ok) throw new Error("Failed to fetch posts");
             const result = await res.json();
             
@@ -140,17 +142,21 @@ export default function DashboardPage() {
                                             {new Date(post.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-3 whitespace-nowrap">
-                                            <Link href="/editor" className="text-zinc-400 hover:text-blue-400 transition-colors inline-flex items-center gap-1" title="Edit (Placeholder)">
-                                                <Edit2 size={16} />
-                                            </Link>
-                                            <button 
-                                                onClick={() => handleDelete(post._id)}
-                                                disabled={deleteLoading === post._id}
-                                                className="text-zinc-400 hover:text-red-400 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
-                                                title="Delete Post"
-                                            >
-                                                {deleteLoading === post._id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                                            </button>
+                                            {session?.user?.email === post.author?.email && (
+                                                <>
+                                                    <Link href="/editor" className="text-zinc-400 hover:text-blue-400 transition-colors inline-flex items-center gap-1" title="Edit (Placeholder)">
+                                                        <Edit2 size={16} />
+                                                    </Link>
+                                                    <button 
+                                                        onClick={() => handleDelete(post._id)}
+                                                        disabled={deleteLoading === post._id}
+                                                        className="text-zinc-400 hover:text-red-400 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                                                        title="Delete Post"
+                                                    >
+                                                        {deleteLoading === post._id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                                    </button>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

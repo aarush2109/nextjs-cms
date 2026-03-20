@@ -3,6 +3,7 @@ import { CalendarIcon, UserIcon } from "lucide-react";
 
 interface Author {
     name: string;
+    email?: string;
     avatar?: string;
 }
 

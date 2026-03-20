@@ -178,12 +178,18 @@ export default function EditorPage() {
                 </div>
 
                 {/* AI Assistant */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="font-semibold text-zinc-100 mb-4 flex items-center gap-2">
-                        <span className="text-blue-400">✨</span> AI Tool
-                    </h3>
-                    <AIContentGenerator onGenerate={(text) => setContent((prev) => prev + text)} />
-                </div>
+                <AIContentGenerator 
+                    editorContent={content}
+                    onGenerateBlog={(newContent, action) => {
+                        if (action === "replace") {
+                            setContent(newContent);
+                        } else {
+                            setContent((prev) => prev + "<br/><br/>" + newContent);
+                        }
+                    }}
+                    onGenerateTitle={(newTitle) => setTitle(newTitle)}
+                    onGenerateSummary={(newSummary) => setExcerpt(newSummary)}
+                />
 
             </aside>
         </div>

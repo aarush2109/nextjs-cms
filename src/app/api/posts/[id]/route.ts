@@ -4,6 +4,8 @@ import Post from "@/models/Post";
 import User from "@/models/User"; // ✅ Required for populate
 import { slugify } from "@/utils/slugify";
 import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // =====================
 // GET SINGLE POST
@@ -16,8 +18,6 @@ export async function GET(
         await connectDB();
 
         const { id } = await context.params; // ✅ Next.js 15 fix
-
-        console.log("GET ID:", id);
 
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(
@@ -61,9 +61,17 @@ export async function PUT(
     try {
         await connectDB();
 
-        const { id } = await context.params;
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?.email) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
 
-        console.log("PUT ID:", id);
+        const user = await User.findOne({ email: session.user.email });
+        if (!user) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await context.params;
 
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(
@@ -82,6 +90,11 @@ export async function PUT(
                 { success: false, error: "Post not found" },
                 { status: 404 }
             );
+        }
+
+        // Authorization check
+        if (post.author.toString() !== user._id.toString()) {
+            return NextResponse.json({ success: false, error: "Forbidden: You do not have permission to edit this post." }, { status: 403 });
         }
 
         // Update fields
@@ -121,9 +134,17 @@ export async function DELETE(
     try {
         await connectDB();
 
-        const { id } = await context.params;
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?.email) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
 
-        console.log("DELETE ID:", id);
+        const user = await User.findOne({ email: session.user.email });
+        if (!user) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await context.params;
 
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(
@@ -132,14 +153,21 @@ export async function DELETE(
             );
         }
 
-        const deletedPost = await Post.findByIdAndDelete(id);
+        const post = await Post.findById(id);
 
-        if (!deletedPost) {
+        if (!post) {
             return NextResponse.json(
                 { success: false, error: "Post not found" },
                 { status: 404 }
             );
         }
+
+        // Authorization check
+        if (post.author.toString() !== user._id.toString()) {
+            return NextResponse.json({ success: false, error: "Forbidden: You do not have permission to delete this post." }, { status: 403 });
+        }
+
+        await Post.findByIdAndDelete(id);
 
         return NextResponse.json(
             { success: true, data: {} },

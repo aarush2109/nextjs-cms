@@ -61,11 +61,16 @@ export async function POST(req: Request) {
 
         const session = await getServerSession(authOptions);
         
-        if (!session || !session.user) {
-            return NextResponse.json({ success: false, error: "Unauthorized. Please log in to create a post." }, { status: 401 });
+        if (!session || !session.user?.email) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const authorId = (session.user as any).id;
+        const user = await User.findOne({ email: session.user.email });
+        if (!user) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const authorId = user._id;
 
         // Create the post
         const newPost = await Post.create({

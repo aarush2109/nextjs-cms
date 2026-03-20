@@ -1,6 +1,14 @@
-// Placeholder for Google Gemini API integration
+import { GoogleGenAI } from "@google/genai";
 
-export async function generateContent(prompt: string, tone: string): Promise<string> {
-    // In Phase 2: Connect to generative-ai library and return content
-    return `This is a generated response for: ${prompt} in a ${tone} tone.`;
+export async function generateContent(prompt: string): Promise<string> {
+    const ai = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY!,
+    });
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash", // ✅ works here
+        contents: prompt,
+    });
+
+    return response.text ?? "";
 }
